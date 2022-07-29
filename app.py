@@ -2026,7 +2026,7 @@ def Zigzag(M):
 
         x,P = ekf.ekf(x,x_cur,1/60,P)
         sysData[M]['GrowthRate']['current'] = x[1]
-        sysData[M]['GrowthRate']['current'] = [[P[0][0],P[0][1]],[P[1][0],P[1][1]]]
+        sysData[M]['GrowthRate']['var_matrix'] = [[P[0][0],P[0][1]],[P[1][0],P[1][1]]]
     return
 
 
