@@ -59,7 +59,7 @@ sysData = {'M0' : {
    'OD0' : {'target' : 0.0,'raw' : 0.0,'max' : 100000.0,'min': 0.0,'LASERb' : 1.833 ,'LASERa' : 0.226, 'LEDFa' : 0.673, 'LEDAa' : 7.0  },
    'Chemostat' : {'ON' : 0, 'p1' : 0.0, 'p2' : 0.1},
    'Zigzag': {'ON' : 0, 'Zig' : 0.04,'target' : 0.0,'SwitchPoint' : 0},
-   'GrowthRate': {'current' : 0.0,'record' : [],'var_matrix':[[10, 0],[0,10]],'default' : 2.0},
+   'GrowthRate': {'current' : 0.0,'record' : [],'default' : 2.0, 'ekf_rate' : 0.0, 'ekf_P':[[10, 0],[0,10]], 'ekf_record':[]},
    'Volume' : {'target' : 20.0,'max' : 50.0, 'min' : 0.0,'ON' : 0},
    'Pump1' :  {'target' : 0.0,'default' : 0.0,'max': 1.0, 'min' : -1.0, 'direction' : 1.0, 'ON' : 0,'record' : [], 'thread' : 0},
    'Pump2' :  {'target' : 0.0,'default' : 0.0,'max': 1.0, 'min' : -1.0, 'direction' : 1.0, 'ON' : 0,'record' : [], 'thread' : 0},
@@ -349,6 +349,8 @@ def initialise(M):
     sysData[M]['Thermostat']['record']=[]
 	
     sysData[M]['GrowthRate']['record']=[]
+    sysData[M]['GrowthRate']['ekf_rate']=[]
+
 
     sysDevices[M]['ThermometerInternal']['device']=I2C.get_i2c_device(0x18,2) #Get Thermometer on Bus 2!!!
     sysDevices[M]['ThermometerExternal']['device']=I2C.get_i2c_device(0x1b,2) #Get Thermometer on Bus 2!!!
@@ -1739,7 +1741,7 @@ def csvData(M):
                   'LED_500nm_setpoint','LED_523nm_setpoint','LED_595nm_setpoint','LED_623nm_setpoint',
                   'LED_6500K_setpoint','laser_setpoint','LED_UV_int','FP1_base','FP1_emit1','FP1_emit2','FP2_base',
                   'FP2_emit1','FP2_emit2','FP3_base','FP3_emit1','FP3_emit2','custom_prog_param1','custom_prog_param2',
-                  'custom_prog_param3','custom_prog_status','zigzag_target','growth_rate']
+                  'custom_prog_param3','custom_prog_status','zigzag_target','growth_rate','ekf_growth_rate']
 
     row=[sysData[M]['time']['record'][-1],
         sysData[M]['OD']['record'][-1],
@@ -1774,7 +1776,7 @@ def csvData(M):
     row=row+[sysData[M]['Custom']['Status']*float(sysData[M]['Custom']['ON'])]
     row=row+[sysData[M]['Zigzag']['target']*float(sysData[M]['Zigzag']['ON'])]
     row=row+[sysData[M]['GrowthRate']['current']*sysData[M]['Zigzag']['ON']]
-    
+    row=row+[sysData[M]['GrowthRate']['ekf_rate']*sysData[M]['Zigzag']['ON']]
    
 	#Following can be uncommented if you are recording ALL spectra for e.g. biofilm experiments
     #bands=['nm410' ,'nm440','nm470','nm510','nm550','nm583','nm620','nm670','CLEAR','NIR']    
@@ -1843,7 +1845,8 @@ def downsample(M):
     sysData[M]['Pump3']['record']=downsampleFunc(sysData[M]['Pump3']['record'],index)
     sysData[M]['Pump4']['record']=downsampleFunc(sysData[M]['Pump4']['record'],index)
     sysData[M]['GrowthRate']['record']=downsampleFunc(sysData[M]['GrowthRate']['record'],index)
-    
+    sysData[M]['GrowthRate']['ekf_record']=downsampleFunc(sysData[M]['GrowthRate']['ekf_record'],index)
+
         
     for FP in ['FP1','FP2','FP3']:
         sysData[M][FP]['BaseRecord']=downsampleFunc(sysData[M][FP]['BaseRecord'],index)
@@ -2008,25 +2011,21 @@ def Zigzag(M):
     sysData[M]['OD']['target']=sysData[M]['Zigzag']['target']
 	
     #Subsequent section is for growth estimation.
-    """
     TimeSinceSwitch=iteration-sysData[M]['Zigzag']['SwitchPoint']
     if (iteration>6 and TimeSinceSwitch>5 and current > 0 and last > 0): #The reason we wait a few minutes after starting growth is that new media may still be introduced, it takes a while for the growth to get going.
         dGrowthRate=(math.log(current)-math.log(last))*60.0 #Converting to units of 1/hour
         sysData[M]['GrowthRate']['current']=sysData[M]['GrowthRate']['current']*0.95 + dGrowthRate*0.05 #We are essentially implementing an online growth rate estimator with learning rate 0.05
-    """
 
-    #Growth estimation by extended kalman filter
-    #Warning: Currently assumes fixed 60 sec iterations
-    import ekf #Tune perimeters here
-    TimeSinceSwitch=iteration-sysData[M]['Zigzag']['SwitchPoint']
-    if (iteration>6 and TimeSinceSwitch>5 and current > 0 and last > 0): #The reason we wait a few minutes after starting growth is that new media may still be introduced, it takes a while for the growth to get going.
-        x = np.asarray([last,sysData[M]['GrowthRate']['current']]) #Current State vector
+        #Growth estimation by extended kalman filter
+        #Warning: Currently assumes fixed 60 sec iterations
+        import ekf #Tune perimeters here
+        x = np.asarray([last,sysData[M]['GrowthRate']['ekf_rate']]) #Current State vector
         x_cur = np.asarry([current,(math.log(current)-math.log(last))*60]) #Next Real System Vector
-        P = np.asarray[sysData[M]["GrowthRate"]["var_matrix"]]
+        P = np.asarray[sysData[M]["GrowthRate"]["ekf_P"]]
 
         x,P = ekf.ekf(x,x_cur,1/60,P)
-        sysData[M]['GrowthRate']['current'] = x[1]
-        sysData[M]['GrowthRate']['var_matrix'] = [[P[0][0],P[0][1]],[P[1][0],P[1][1]]]
+        sysData[M]['GrowthRate']['ekf_rate'] = x[1]
+        sysData[M]['GrowthRate']['ekf_P'] = [[P[0][0],P[0][1]],[P[1][0],P[1][1]]]
     return
 
 
@@ -2178,6 +2177,8 @@ def runExperiment(M,placeholder):
     sysData[M]['Pump3']['record'].append(sysData[M]['Pump3']['target']*float(sysData[M]['Pump3']['ON']))
     sysData[M]['Pump4']['record'].append(sysData[M]['Pump4']['target']*float(sysData[M]['Pump4']['ON']))
     sysData[M]['GrowthRate']['record'].append(sysData[M]['GrowthRate']['current']*float(sysData[M]['Zigzag']['ON']))
+    sysData[M]['GrowthRate']['ekf_record'].append(sysData[M]['GrowthRate']['ekf_rate']*float(sysData[M]['Zigzag']['ON']))
+
     for FP in ['FP1','FP2','FP3']:
         if sysData[M][FP]['ON']==1:
             sysData[M][FP]['BaseRecord'].append(sysData[M][FP]['Base'])
