@@ -540,7 +540,7 @@ function updateData(data){
 		  
 		  
 		    if (data.Zigzag.ON==1){
-		  drawChart2(1,7,data.time.record.toString(),data.GrowthRate.record.toString(),"" ,"","","","",'Time (h)','Growth Rate','Growth Rate,')
+		  drawChart2(1,7,data.time.record.toString(),data.GrowthRate.record.toString(),data.GrowthRate.ekf_record.toString(),"" ,"","","","",'Time (h)','Growth Rate','Growth Rate,')
 		  }
 		  
 
