@@ -349,7 +349,7 @@ def initialise(M):
     sysData[M]['Thermostat']['record']=[]
 	
     sysData[M]['GrowthRate']['record']=[]
-    sysData[M]['GrowthRate']['ekf_rate']=[]
+    sysData[M]['GrowthRate']['ekf_record']=[]
 
 
     sysDevices[M]['ThermometerInternal']['device']=I2C.get_i2c_device(0x18,2) #Get Thermometer on Bus 2!!!
@@ -2025,6 +2025,7 @@ def Zigzag(M):
 
         x,P = ekf.ekf(x,x_cur,1/60,P)
         sysData[M]['GrowthRate']['ekf_rate'] = x[1]
+        print(x)
         sysData[M]['GrowthRate']['ekf_P'] = [[P[0][0],P[0][1]],[P[1][0],P[1][1]]]
     return
 
