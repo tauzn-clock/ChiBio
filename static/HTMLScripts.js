@@ -539,8 +539,9 @@ function getSysData(){
            }
              
              
-               if (data.Zigzag.ON==1){
-             drawChart2(2,7,data.time.record.toString(),data.GrowthRate.record.toString(),data.GrowthRate.ekf_record.toString(),"" ,"","","",'Time (h)','Growth Rate(1/h)','Current Growth Rate, EKF Growth Rate')
+             if (data.Zigzag.ON==1){
+                drawChart2(2,7,data.time.record.toString(),data.OD.record.toString(),data.GrowthRate.ekf_od_record.toString(),"" ,"","","",'Time (h)','OD','Real OD, Predicted OD')
+                drawChart2(2,8,data.time.record.toString(),data.GrowthRate.record.toString(),data.GrowthRate.ekf_rate_record.toString(),"" ,"","","",'Time (h)','Growth Rate(1/h)','Current Growth Rate, EKF Growth Rate')
              }
              
  
@@ -623,6 +624,9 @@ function getSysData(){
      
  
  }
+ 
+ 
+ 
  
  
  
