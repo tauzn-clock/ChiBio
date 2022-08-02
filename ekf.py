@@ -102,14 +102,16 @@ def ekf(x,x_cur,dt,P, verbose = False):
     P_tmp = custom_mat_mul(DIFF,P_pred,DIFF.transpose()) + custom_mat_mul(K,R,K.transpose())
     if (verbose): 
         print("==========")
+        print("x :", x)
+        print("P: ", P)
         print("x_pred: ", x_pred)
         print("P_pred: ", P_pred)
         print("F: ",F)
         print("H: ",H)
         print("K: ", K)
         print("Net Innovation: ", np.matmul(K,innovation))
-        print("x: ",x)
-        print("P: ",P)
+        print("x_tmp: ",x_tmp)
+        print("P_tmp: ",P_tmp)
         
     return x_tmp, P_tmp
 
