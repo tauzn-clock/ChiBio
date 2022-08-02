@@ -2184,7 +2184,7 @@ def runExperiment(M,placeholder):
     sysData[M]['Pump4']['record'].append(sysData[M]['Pump4']['target']*float(sysData[M]['Pump4']['ON']))
     sysData[M]['GrowthRate']['record'].append(sysData[M]['GrowthRate']['current']*float(sysData[M]['Zigzag']['ON']))
     sysData[M]['GrowthRate']['ekf_od_record'].append(sysData[M]['GrowthRate']['ekf_x'][0]*float(sysData[M]['Zigzag']['ON']))
-    sysData[M]['GrowthRate']['ekf_rate_record'].append(sysData[M]['GrowthRate']['ekf_x'][1]*float(sysData[M]['Zigzag']['ON']))
+    sysData[M]['GrowthRate']['ekf_rate_record'].append(3600*sysData[M]['GrowthRate']['ekf_x'][1]*float(sysData[M]['Zigzag']['ON'])) #Convet from (1/s) to (1/h)
 
 
     for FP in ['FP1','FP2','FP3']:
