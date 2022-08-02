@@ -2024,8 +2024,8 @@ def Zigzag(M):
         #Warning: Currently assumes fixed 60 sec iterations
         import ekf #Tune perimeters here
         x = np.asarray(sysData[M]['GrowthRate']['ekf_x']) #Current State vector
-        x_cur = np.asarry([current,(math.log(current)-math.log(last))*60]) #Next Real System Vector
-        P = np.asarray[sysData[M]["GrowthRate"]["ekf_P"]]
+        x_cur = np.asarray([current,(math.log(current)-math.log(last))*60]) #Next Real System Vector
+        P = np.asarray(sysData[M]["GrowthRate"]["ekf_P"])
 
         x,P = ekf.ekf(x,x_cur,1/60,P)
         sysData[M]['GrowthRate']['ekf_x'] = [x[0],x[1]]
