@@ -1,6 +1,6 @@
 #!/bin/env python3
 '''
-This is a implementation of the Extended Kalmann Filter
+This is a more compact implementation of the Extended Kalmann Filter
 Similar to model here: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0181923
 '''
 import math
@@ -9,6 +9,7 @@ import numpy as np
 ######################
 #     Parameters     #
 ######################
+
 I_0 = 10
 Q = np.asarray([[0.002**2 , 0],
                 [0, 5.0e-7]]) 
@@ -27,7 +28,7 @@ def custom_mat_mul(*args):
 def f_func(x,dt):
     """
     Assumption:
-    1) We have a exponential model of cell growth
+    1) We have a geometric model of how the cells will grow.
        OD_n+1 = OD_n * (exp(rate_n*dt_n)) 
     2) Rate remains constant
        rate_n+1 = rate_n
@@ -81,7 +82,7 @@ def ekf(x,x_cur,dt,P, verbose = False):
 
     #Predict From existing Info
     x_pred = f_func(x,dt)
-    F = get_F(x_pred,dt)
+    F = get_F(x,dt)
     P_pred = custom_mat_mul(F,P,F.transpose()) + Q 
 
     #Update with new values
@@ -114,4 +115,3 @@ def ekf(x,x_cur,dt,P, verbose = False):
         print("P_tmp: ",P_tmp)
         
     return x_tmp, P_tmp
-
